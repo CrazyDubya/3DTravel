@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Traffic Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container"></div>
+
+        <div id="control-panel">
+            <h2>Traffic Simulator Controls</h2>
+
+            <div class="control-section">
+                <h3>Vehicle Density</h3>
+                <div class="control-group">
+                    <label>Cars: <span id="car-density-value">5</span></label>
+                    <input type="range" id="car-density" min="0" max="50" value="5">
+                </div>
+                <div class="control-group">
+                    <label>Buses: <span id="bus-density-value">3</span></label>
+                    <input type="range" id="bus-density" min="0" max="20" value="3">
+                </div>
+                <div class="control-group">
+                    <label>Bicycles: <span id="bicycle-density-value">4</span></label>
+                    <input type="range" id="bicycle-density" min="0" max="30" value="4">
+                </div>
+                <div class="control-group">
+                    <label>Pedestrians: <span id="pedestrian-density-value">10</span></label>
+                    <input type="range" id="pedestrian-density" min="0" max="50" value="10">
+                </div>
+                <div class="control-group">
+                    <label>Trains: <span id="train-density-value">2</span></label>
+                    <input type="range" id="train-density" min="0" max="10" value="2">
+                </div>
+                <div class="control-group">
+                    <label>Subway: <span id="subway-density-value">2</span></label>
+                    <input type="range" id="subway-density" min="0" max="10" value="2">
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Speed Settings</h3>
+                <div class="control-group">
+                    <label>Simulation Speed: <span id="sim-speed-value">1.0x</span></label>
+                    <input type="range" id="sim-speed" min="0.1" max="3" step="0.1" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Car Speed: <span id="car-speed-value">60</span> km/h</label>
+                    <input type="range" id="car-speed" min="20" max="120" value="60">
+                </div>
+                <div class="control-group">
+                    <label>Bus Speed: <span id="bus-speed-value">50</span> km/h</label>
+                    <input type="range" id="bus-speed" min="20" max="80" value="50">
+                </div>
+                <div class="control-group">
+                    <label>Train Speed: <span id="train-speed-value">100</span> km/h</label>
+                    <input type="range" id="train-speed" min="40" max="200" value="100">
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Traffic Flow</h3>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="two-way-traffic" checked>
+                        Two-Way Traffic
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="show-subway" checked>
+                        Show Subway (Underground)
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="show-paths" checked>
+                        Show Vehicle Paths
+                    </label>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>View Controls</h3>
+                <button id="reset-camera">Reset Camera</button>
+                <button id="toggle-pause">Pause</button>
+                <div class="info">
+                    <p>Use mouse to rotate/zoom</p>
+                    <p>Vehicles: <span id="vehicle-count">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="simulator.js"></script>
+</body>
+</html>
