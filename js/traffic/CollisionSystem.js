@@ -27,6 +27,19 @@ export class CollisionSystem {
             subway: 15,
             emergency: 12
         };
+
+        // Performance optimization: Cache intersection positions
+        this.cachedIntersections = this.generateIntersectionPositions();
+    }
+
+    generateIntersectionPositions() {
+        const positions = [];
+        for (let x = -60; x <= 60; x += 30) {
+            for (let z = -60; z <= 60; z += 30) {
+                positions.push({ x, z });
+            }
+        }
+        return positions;
     }
 
     update(vehicles) {
@@ -59,6 +72,7 @@ export class CollisionSystem {
         vehicle.isBlocked = false;
         vehicle.blockingVehicle = null;
 
+        // Optimization: Early exit if no collision detection
         const nearby = this.spatialGrid.getNearby(vehicle, 1);
         if (nearby.length === 0) return;
 
@@ -67,29 +81,40 @@ export class CollisionSystem {
         const safeDistance = this.safeDistances[myType] || 5;
         const awareness = this.awarenessRadius[myType] || 10;
 
+        // Performance optimization: Use squared distances to avoid sqrt
+        const safeDistanceSq = safeDistance * safeDistance;
+        const awarenessSq = awareness * awareness;
+
         // Check vehicles ahead in our path
-        nearby.forEach(other => {
-            if (!other.mesh || other === vehicle) return;
+        for (let i = 0; i < nearby.length; i++) {
+            const other = nearby[i];
+
+            // Optimization: Early exit for invalid vehicles
+            if (!other.mesh || other === vehicle) continue;
+
+            // Optimization: Quick check if ahead before calculating distance
+            if (!this.isAheadOfMe(vehicle, other)) continue;
 
             const otherPos = other.mesh.position;
-            const distance = myPos.distanceTo(otherPos);
 
-            // Only care about vehicles ahead of us
-            if (!this.isAheadOfMe(vehicle, other)) return;
+            // Optimization: Use distanceToSquared instead of distanceTo
+            const distanceSq = myPos.distanceToSquared(otherPos);
 
             // Check if too close
-            if (distance < safeDistance) {
+            if (distanceSq < safeDistanceSq) {
                 vehicle.isBlocked = true;
                 vehicle.blockingVehicle = other;
                 vehicle.targetSpeed = 0; // Full stop
-            } else if (distance < awareness) {
-                // Slow down proportionally
+                break; // Early exit - already blocked
+            } else if (distanceSq < awarenessSq) {
+                // Slow down proportionally - now need actual distance
+                const distance = Math.sqrt(distanceSq);
                 const slowFactor = (distance - safeDistance) / (awareness - safeDistance);
                 const normalSpeed = vehicle.getBaseSpeed();
                 vehicle.targetSpeed = normalSpeed * slowFactor;
                 vehicle.isSlowing = true;
             }
-        });
+        }
 
         // If not blocked, return to normal speed
         if (!vehicle.isBlocked && !vehicle.isSlowing) {
@@ -150,27 +175,23 @@ export class CollisionSystem {
 
     findNearestIntersection(vehicle) {
         const pos = vehicle.mesh.position;
-        const intersectionPositions = [
-            { x: -60, z: -60 }, { x: -60, z: -30 }, { x: -60, z: 0 }, { x: -60, z: 30 }, { x: -60, z: 60 },
-            { x: -30, z: -60 }, { x: -30, z: -30 }, { x: -30, z: 0 }, { x: -30, z: 30 }, { x: -30, z: 60 },
-            { x: 0, z: -60 }, { x: 0, z: -30 }, { x: 0, z: 0 }, { x: 0, z: 30 }, { x: 0, z: 60 },
-            { x: 30, z: -60 }, { x: 30, z: -30 }, { x: 30, z: 0 }, { x: 30, z: 30 }, { x: 30, z: 60 },
-            { x: 60, z: -60 }, { x: 60, z: -30 }, { x: 60, z: 0 }, { x: 60, z: 30 }, { x: 60, z: 60 }
-        ];
 
+        // Optimization: Use cached intersection positions
         let nearest = null;
-        let minDist = Infinity;
+        let minDistSq = Infinity;
 
-        intersectionPositions.forEach(intersection => {
-            const dist = Math.sqrt(
-                Math.pow(pos.x - intersection.x, 2) +
-                Math.pow(pos.z - intersection.z, 2)
-            );
-            if (dist < minDist) {
-                minDist = dist;
+        // Optimization: Use squared distances to avoid sqrt
+        for (let i = 0; i < this.cachedIntersections.length; i++) {
+            const intersection = this.cachedIntersections[i];
+            const dx = pos.x - intersection.x;
+            const dz = pos.z - intersection.z;
+            const distSq = dx * dx + dz * dz;
+
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
                 nearest = intersection;
             }
-        });
+        }
 
         return nearest;
     }

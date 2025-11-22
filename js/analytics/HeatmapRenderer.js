@@ -16,8 +16,8 @@ export class HeatmapRenderer {
         const gridData = this.statisticsTracker.heatmapGrid;
         const { rows, cols, cellSize, width, height } = gridData;
 
-        // Create a plane for each grid cell with data
-        const heatmapGroup = new THREE.Group();
+        // Performance optimization: Collect all cells with data first
+        const activeCells = [];
 
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < cols; j++) {
@@ -31,29 +31,57 @@ export class HeatmapRenderer {
                 }
 
                 if (value > 0) {
-                    // Calculate position
                     const x = (j * cellSize) - (width / 2) + (cellSize / 2);
                     const z = (i * cellSize) - (height / 2) + (cellSize / 2);
-
-                    // Calculate color based on value
                     const color = this.getHeatColor(value);
-
-                    // Create cell mesh
-                    const geometry = new THREE.PlaneGeometry(cellSize, cellSize);
-                    const material = new THREE.MeshBasicMaterial({
-                        color: color,
-                        transparent: true,
-                        opacity: this.opacity,
-                        side: THREE.DoubleSide
-                    });
-
-                    const mesh = new THREE.Mesh(geometry, material);
-                    mesh.rotation.x = -Math.PI / 2;
-                    mesh.position.set(x, 0.25, z); // Slightly above ground
-                    heatmapGroup.add(mesh);
+                    activeCells.push({ x, z, color });
                 }
             }
         }
+
+        // Optimization: Use merged geometry and vertex colors for better performance
+        const heatmapGroup = new THREE.Group();
+
+        if (activeCells.length === 0) return heatmapGroup;
+
+        // Create one merged geometry for all cells
+        const cellGeometry = new THREE.PlaneGeometry(cellSize, cellSize);
+        const mergedGeometry = new THREE.BufferGeometry();
+        const positions = [];
+        const colors = [];
+
+        activeCells.forEach(cell => {
+            // Clone and transform the cell geometry
+            const tempGeometry = cellGeometry.clone();
+            tempGeometry.rotateX(-Math.PI / 2);
+            tempGeometry.translate(cell.x, 0.25, cell.z);
+
+            const posArray = tempGeometry.attributes.position.array;
+            positions.push(...posArray);
+
+            // Add vertex colors (4 vertices per plane)
+            for (let i = 0; i < 4; i++) {
+                colors.push(cell.color.r, cell.color.g, cell.color.b);
+            }
+        });
+
+        // Set attributes
+        mergedGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        mergedGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+        // Create single mesh with vertex colors
+        const material = new THREE.MeshBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: this.opacity,
+            side: THREE.DoubleSide
+        });
+
+        const mesh = new THREE.Mesh(mergedGeometry, material);
+        heatmapGroup.add(mesh);
+
+        // Clean up
+        cellGeometry.dispose();
 
         return heatmapGroup;
     }
@@ -144,8 +172,9 @@ export class HeatmapRenderer {
     setOpacity(opacity) {
         this.opacity = Math.max(0, Math.min(1, opacity));
         if (this.heatmapMesh) {
+            // Optimization: Direct material access since we use merged geometry
             this.heatmapMesh.traverse(child => {
-                if (child.material) {
+                if (child.isMesh && child.material) {
                     child.material.opacity = this.opacity;
                 }
             });

@@ -27,6 +27,11 @@ export class Vehicle {
 
         // Lane assignment
         this.lane = 0; // 0 = right lane, 1 = left lane (for two-lane roads)
+
+        // Performance optimization: LOD system
+        this.updateFrequency = 1; // Update every N frames
+        this.frameCounter = 0;
+        this.lodLevel = 'high'; // high, medium, low, hidden
     }
 
     selectPath() {
@@ -45,8 +50,33 @@ export class Vehicle {
         return this.baseSpeed;
     }
 
-    update(simulationSpeed, deltaTime = 0.016) {
+    updateLOD(camera) {
+        if (!this.mesh || !camera) return;
+
+        // Optimization: Calculate LOD based on distance to camera
+        const distanceSq = camera.position.distanceToSquared(this.mesh.position);
+
+        if (distanceSq < 2500) { // < 50 units
+            this.lodLevel = 'high';
+            this.updateFrequency = 1;
+        } else if (distanceSq < 10000) { // < 100 units
+            this.lodLevel = 'medium';
+            this.updateFrequency = 2;
+        } else if (distanceSq < 40000) { // < 200 units
+            this.lodLevel = 'low';
+            this.updateFrequency = 4;
+        } else {
+            this.lodLevel = 'hidden';
+            this.updateFrequency = 8; // Very infrequent updates
+        }
+    }
+
+    update(simulationSpeed, deltaTime = 0.016, camera = null) {
         if (!this.mesh || !this.currentPath) return;
+
+        // Performance optimization: LOD-based update throttling
+        this.frameCounter++;
+        if (this.frameCounter % this.updateFrequency !== 0) return;
 
         // Update target speed if not blocked
         if (!this.isBlocked && !this.isSlowing) {
@@ -68,7 +98,7 @@ export class Vehicle {
             this.lastStopTime = 0;
         }
 
-        const speedFactor = (this.currentSpeed / 100) * 0.01 * simulationSpeed;
+        const speedFactor = (this.currentSpeed / 100) * 0.01 * simulationSpeed * this.updateFrequency;
         this.progress += speedFactor * this.direction;
 
         // Track distance
@@ -80,7 +110,11 @@ export class Vehicle {
         }
 
         this.updatePosition();
-        this.updateWheelRotation(speedFactor);
+
+        // Optimization: Only update wheel rotation for nearby vehicles
+        if (this.lodLevel === 'high' || this.lodLevel === 'medium') {
+            this.updateWheelRotation(speedFactor);
+        }
     }
 
     updatePosition() {

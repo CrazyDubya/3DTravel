@@ -1,6 +1,7 @@
 // Main Entry Point for 3D Traffic Simulator v0.2.1
 import { ConfigManager } from './js/utils/ConfigManager.js';
 import { SpatialGrid } from './js/utils/SpatialPartitioning.js';
+import { PerformanceMonitor } from './js/utils/PerformanceOptimizations.js';
 import { TimeManager } from './js/core/TimeManager.js';
 import { TrafficLightManager } from './js/traffic/TrafficLight.js';
 import { CollisionSystem } from './js/traffic/CollisionSystem.js';
@@ -29,6 +30,7 @@ class TrafficSimulator {
 
         // Initialize managers
         this.config = new ConfigManager();
+        this.performanceMonitor = new PerformanceMonitor();
         this.timeManager = null;
         this.trafficLightManager = null;
         this.collisionSystem = null;
@@ -488,6 +490,9 @@ class TrafficSimulator {
     animate() {
         requestAnimationFrame(() => this.animate());
 
+        // Performance optimization: Start frame timing
+        this.performanceMonitor.startFrame();
+
         const now = Date.now();
         const deltaTime = (now - this.lastFrameTime) / 1000;
         this.lastFrameTime = now;
@@ -500,9 +505,18 @@ class TrafficSimulator {
             this.trafficLightManager.update(deltaTime);
             this.weatherSystem.update(deltaTime);
 
-            // Update vehicles
+            // Performance optimization: Update vehicle LOD levels every 30 frames
+            if (this.performanceMonitor.metrics.frameCount % 30 === 0) {
+                this.vehicles.forEach(vehicle => {
+                    if (vehicle.updateLOD) {
+                        vehicle.updateLOD(this.camera);
+                    }
+                });
+            }
+
+            // Update vehicles with camera reference for LOD
             this.vehicles.forEach(vehicle => {
-                vehicle.update(simSpeed, deltaTime);
+                vehicle.update(simSpeed, deltaTime, this.camera);
             });
 
             // Collision detection
@@ -531,6 +545,17 @@ class TrafficSimulator {
 
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
+
+        // Performance optimization: End frame timing and adapt quality
+        this.performanceMonitor.endFrame();
+
+        // Adaptive performance: Adjust quality every 60 frames based on performance
+        if (this.performanceMonitor.metrics.frameCount % 60 === 0) {
+            const perfLevel = this.performanceMonitor.getPerformanceLevel();
+            if (this.weatherSystem && this.weatherSystem.setPerformanceLevel) {
+                this.weatherSystem.setPerformanceLevel(perfLevel);
+            }
+        }
     }
 }
 

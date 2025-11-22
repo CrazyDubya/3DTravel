@@ -15,7 +15,7 @@ export class StreetFurniture {
     }
 
     createLampPosts(roadPaths) {
-        // Place lamp posts along roads
+        // Optimization: Pre-calculate all lamp post positions
         const positions = [];
 
         // Along horizontal roads
@@ -34,18 +34,52 @@ export class StreetFurniture {
             }
         }
 
-        positions.forEach(pos => {
-            const lampPost = this.createLampPost();
-            lampPost.position.set(pos.x, pos.y, pos.z);
-            this.scene.add(lampPost);
-            this.furniture.push(lampPost);
+        // Optimization: Use instanced rendering for poles
+        const poleGeometry = new THREE.CylinderGeometry(0.08, 0.1, 4, 8);
+        const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });
+        const poleInstances = new THREE.InstancedMesh(poleGeometry, poleMaterial, positions.length);
 
-            // Track lights for night-time activation
-            const light = lampPost.children.find(child => child.isLight);
-            if (light) {
-                this.streetLights.push(light);
-            }
+        const headGeometry = new THREE.CylinderGeometry(0.3, 0.2, 0.4, 8);
+        const headMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+        const headInstances = new THREE.InstancedMesh(headGeometry, headMaterial, positions.length);
+
+        const bulbGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+        const bulbMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFF99,
+            emissive: 0xFFFF99,
+            emissiveIntensity: 0
         });
+        const bulbInstances = new THREE.InstancedMesh(bulbGeometry, bulbMaterial, positions.length);
+        bulbInstances.userData.isBulbInstance = true; // For night updates
+
+        const matrix = new THREE.Matrix4();
+
+        positions.forEach((pos, index) => {
+            // Pole matrix
+            matrix.makeTranslation(pos.x, 2, pos.z);
+            poleInstances.setMatrixAt(index, matrix);
+
+            // Head matrix
+            matrix.makeTranslation(pos.x, 4.2, pos.z);
+            headInstances.setMatrixAt(index, matrix);
+
+            // Bulb matrix
+            matrix.makeTranslation(pos.x, 4, pos.z);
+            bulbInstances.setMatrixAt(index, matrix);
+
+            // Individual point lights (can't be instanced, but fewer objects than before)
+            const pointLight = new THREE.PointLight(0xFFFF99, 0, 15);
+            pointLight.position.set(pos.x, 4, pos.z);
+            pointLight.castShadow = false;
+            this.scene.add(pointLight);
+            this.streetLights.push(pointLight);
+        });
+
+        this.scene.add(poleInstances);
+        this.scene.add(headInstances);
+        this.scene.add(bulbInstances);
+        this.furniture.push(poleInstances, headInstances, bulbInstances);
+        this.bulbInstances = bulbInstances; // Store reference for night updates
     }
 
     createLampPost() {
@@ -314,16 +348,15 @@ export class StreetFurniture {
             const isNight = this.timeManager.isNighttime();
             const intensity = isNight ? 0.5 : 0;
 
+            // Optimization: Batch update lights
             this.streetLights.forEach(light => {
                 light.intensity = intensity;
-                // Update bulb emissive intensity
-                const bulb = light.parent.children.find(child =>
-                    child.material && child.material.emissive
-                );
-                if (bulb) {
-                    bulb.material.emissiveIntensity = isNight ? 0.8 : 0;
-                }
             });
+
+            // Update bulb emissive intensity for instanced bulbs
+            if (this.bulbInstances && this.bulbInstances.material) {
+                this.bulbInstances.material.emissiveIntensity = isNight ? 0.8 : 0;
+            }
         }
     }
 

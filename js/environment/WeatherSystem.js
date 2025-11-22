@@ -1,4 +1,4 @@
-// Weather System with particle effects
+// Weather System with particle effects and optimizations
 export class WeatherSystem {
     constructor(scene, config) {
         this.scene = scene;
@@ -7,14 +7,37 @@ export class WeatherSystem {
         this.particles = null;
         this.particleSystem = null;
 
+        // Performance optimization: reduce particle count on lower performance
+        this.performanceLevel = 'high'; // high, medium, low
+
         this.weatherEffects = {
-            clear: { visibility: 500, speedModifier: 1.0 },
-            rain: { visibility: 200, speedModifier: 0.8 },
-            snow: { visibility: 150, speedModifier: 0.6 },
-            fog: { visibility: 100, speedModifier: 0.9 }
+            clear: { visibility: 500, speedModifier: 1.0, particles: 0 },
+            rain: { visibility: 200, speedModifier: 0.8, particles: 5000 },
+            snow: { visibility: 150, speedModifier: 0.6, particles: 3000 },
+            fog: { visibility: 100, speedModifier: 0.9, particles: 0 }
         };
 
+        // Optimization: Only update visible particles
+        this.updateCounter = 0;
+        this.updateFrequency = 1; // Update every N frames
+
         this.setupWeather();
+    }
+
+    setPerformanceLevel(level) {
+        this.performanceLevel = level;
+        if (this.currentWeather !== 'clear' && this.currentWeather !== 'fog') {
+            this.setupWeather(); // Recreate with new particle count
+        }
+    }
+
+    getParticleCount(baseCount) {
+        switch (this.performanceLevel) {
+            case 'high': return baseCount;
+            case 'medium': return Math.floor(baseCount * 0.6);
+            case 'low': return Math.floor(baseCount * 0.3);
+            default: return baseCount;
+        }
     }
 
     setupWeather() {
@@ -40,7 +63,8 @@ export class WeatherSystem {
     }
 
     createRain() {
-        const particleCount = 5000;
+        const baseCount = this.weatherEffects.rain.particles;
+        const particleCount = this.getParticleCount(baseCount);
         const particles = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const velocities = new Float32Array(particleCount);
@@ -59,7 +83,8 @@ export class WeatherSystem {
             color: 0xaaaaaa,
             size: 0.2,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.6,
+            sizeAttenuation: true // Optimization: proper size handling
         });
 
         this.particleSystem = new THREE.Points(particles, material);
@@ -68,7 +93,8 @@ export class WeatherSystem {
     }
 
     createSnow() {
-        const particleCount = 3000;
+        const baseCount = this.weatherEffects.snow.particles;
+        const particleCount = this.getParticleCount(baseCount);
         const particles = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const velocities = new Float32Array(particleCount);
@@ -87,7 +113,8 @@ export class WeatherSystem {
             color: 0xffffff,
             size: 0.4,
             transparent: true,
-            opacity: 0.8
+            opacity: 0.8,
+            sizeAttenuation: true
         });
 
         this.particleSystem = new THREE.Points(particles, material);
@@ -108,9 +135,15 @@ export class WeatherSystem {
     update(deltaTime) {
         if (!this.particleSystem) return;
 
+        // Optimization: Skip updates on some frames for better performance
+        this.updateCounter++;
+        if (this.updateCounter % this.updateFrequency !== 0) return;
+
         const positions = this.particles.attributes.position.array;
         const velocities = this.particles.attributes.velocity.array;
+        const time = Date.now() * 0.001;
 
+        // Optimization: Batch update particles
         for (let i = 0; i < positions.length / 3; i++) {
             const idx = i * 3;
 
@@ -126,10 +159,12 @@ export class WeatherSystem {
 
             // Slight horizontal movement for realism
             if (this.currentWeather === 'rain') {
-                positions[idx] += Math.sin(Date.now() * 0.001) * 0.02;
+                positions[idx] += Math.sin(time) * 0.02;
             } else if (this.currentWeather === 'snow') {
-                positions[idx] += Math.sin(Date.now() * 0.001 + i) * 0.05;
-                positions[idx + 2] += Math.cos(Date.now() * 0.001 + i) * 0.05;
+                // Optimization: Use pre-computed offset
+                const offset = i * 0.1;
+                positions[idx] += Math.sin(time + offset) * 0.05;
+                positions[idx + 2] += Math.cos(time + offset) * 0.05;
             }
         }
 
