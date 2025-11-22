@@ -20,24 +20,8 @@
                     <input type="range" id="car-density" min="0" max="50" value="5">
                 </div>
                 <div class="control-group">
-                    <label>Buses: <span id="bus-density-value">3</span></label>
-                    <input type="range" id="bus-density" min="0" max="20" value="3">
-                </div>
-                <div class="control-group">
-                    <label>Bicycles: <span id="bicycle-density-value">4</span></label>
-                    <input type="range" id="bicycle-density" min="0" max="30" value="4">
-                </div>
-                <div class="control-group">
-                    <label>Pedestrians: <span id="pedestrian-density-value">10</span></label>
-                    <input type="range" id="pedestrian-density" min="0" max="50" value="10">
-                </div>
-                <div class="control-group">
-                    <label>Trains: <span id="train-density-value">2</span></label>
-                    <input type="range" id="train-density" min="0" max="10" value="2">
-                </div>
-                <div class="control-group">
-                    <label>Subway: <span id="subway-density-value">2</span></label>
-                    <input type="range" id="subway-density" min="0" max="10" value="2">
+                    <label>Emergency: <span id="emergency-density-value">1</span></label>
+                    <input type="range" id="emergency-density" min="0" max="10" value="1">
                 </div>
             </div>
 
@@ -62,23 +46,28 @@
             </div>
 
             <div class="control-section">
+                <h3>Environment</h3>
+                <div class="control-group">
+                    <label>Time of Day: <span id="time-value">12:00 PM</span></label>
+                    <input type="range" id="time-of-day" min="0" max="24" step="0.5" value="12">
+                </div>
+                <div class="control-group">
+                    <label>Weather:</label>
+                    <select id="weather-select">
+                        <option value="clear">Clear</option>
+                        <option value="rain">Rain</option>
+                        <option value="snow">Snow</option>
+                        <option value="fog">Fog</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-section">
                 <h3>Traffic Flow</h3>
                 <div class="control-group">
                     <label>
                         <input type="checkbox" id="two-way-traffic" checked>
                         Two-Way Traffic
-                    </label>
-                </div>
-                <div class="control-group">
-                    <label>
-                        <input type="checkbox" id="show-subway" checked>
-                        Show Subway (Underground)
-                    </label>
-                </div>
-                <div class="control-group">
-                    <label>
-                        <input type="checkbox" id="show-paths" checked>
-                        Show Vehicle Paths
                     </label>
                 </div>
             </div>
@@ -90,6 +79,7 @@
                 <div class="info">
                     <p>Use mouse to rotate/zoom</p>
                     <p>Vehicles: <span id="vehicle-count">0</span></p>
+                    <p>Current Time: <span id="current-time">12:00 PM</span></p>
                 </div>
             </div>
         </div>
@@ -97,6 +87,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="simulator.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

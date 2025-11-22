@@ -1,46 +1,99 @@
-# 3D Traffic Simulator
+# 3D Traffic Simulator v0.2
 
-A comprehensive 3D JavaScript traffic simulation environment featuring multiple vehicle types, diverse infrastructure, and real-time controls.
+A comprehensive 3D JavaScript traffic simulation environment featuring intelligent traffic management, dynamic environments, and real-time analytics.
+
+## What's New in v0.2
+
+🚦 **Traffic Intelligence** - Functional traffic lights, collision detection, and realistic vehicle behavior
+🌆 **Day/Night Cycle** - 24-hour time simulation with dynamic lighting
+🌧️ **Weather System** - Rain, snow, and fog with particle effects
+🚑 **Emergency Vehicles** - Ambulances, fire trucks, and police cars with sirens
+📊 **Analytics** - Real-time statistics tracking and data export
+🔧 **Modular Architecture** - Clean ES6 modules for maintainability
 
 ## Features
 
-### Vehicle Types
-- **Cars** - Standard passenger vehicles with customizable density and speed
-- **Buses** - Public transit buses on road networks
-- **Bicycles** - Two-wheeled vehicles on bike lanes
-- **Pedestrians** - Walking individuals on sidewalks
-- **Trains** - Surface rail transportation on dedicated tracks
-- **Subway** - Underground metro system
+### Vehicle Types (v0.2)
+- **Cars** - Standard passenger vehicles with collision avoidance and traffic light compliance
+- **Emergency Vehicles** - Ambulances, fire trucks, and police cars with:
+  - Flashing emergency lights
+  - Sirens (when sound enabled)
+  - Higher speed capabilities
+  - Priority navigation
+
+*Note: Buses, bicycles, pedestrians, trains, and subway will be re-added in v0.2.1*
 
 ### Infrastructure
-- **Roads** - Grid-pattern road network with lane markings
+- **Roads** - Grid-pattern road network with yellow lane markings and lane discipline
+- **Traffic Lights** - Functional traffic signals at all intersections
+  - Red, yellow, green states
+  - Synchronized timing
+  - Configurable durations
 - **Sidewalks** - Pedestrian walkways alongside roads
-- **Rail Tracks** - Diagonal train tracks with realistic sleepers and rails
-- **Highway** - Elevated expressway with support pillars
-- **Subway Tunnels** - Underground tunnel system for metro trains
-- **Buildings** - City buildings with illuminated windows
+- **Buildings** - City buildings with illuminated windows (brightness varies with time of day)
 
-### Control Settings
+### Traffic Intelligence 🚦
+- **Collision Detection** - Spatial grid-based collision avoidance
+- **Safe Distances** - Vehicles maintain appropriate following distances
+- **Traffic Light Compliance** - Vehicles stop at red lights, proceed on green
+- **Lane Management** - Vehicles assigned to lanes with lane-keeping behavior
+- **Smart Deceleration** - Smooth braking when approaching obstacles
+- **Two-Way Traffic** - Configurable bidirectional traffic flow
+
+### Environment System 🌍
+- **Day/Night Cycle**
+  - 24-hour time simulation
+  - Dynamic sun and moon positioning
+  - Realistic lighting (sunrise, day, sunset, night)
+  - Sky color transitions
+  - Adjustable time speed
+- **Weather Conditions**
+  - Clear, Rain, Snow, Fog
+  - Particle effects for precipitation
+  - Visibility reduction in fog
+  - Weather affects vehicle speeds
+- **Sound System**
+  - Engine sounds (varies by speed)
+  - Horn effects
+  - Emergency sirens
+  - Ambient city sounds
+  - Volume control
+
+### Analytics & Statistics 📊
+- **Real-Time Tracking**
+  - Vehicle counts by type
+  - Average speeds
+  - Congestion levels
+  - Stop frequency
+  - Distance traveled
+- **Data Export**
+  - CSV format for spreadsheets
+  - JSON format for processing
+  - Time-series data
+  - Heatmap data
+- **Performance Metrics**
+  - 5-minute rolling history
+  - Trend analysis ready
+  - Configurable update intervals
+
+### Control Settings (v0.2)
 
 #### Density Controls
-Adjust the number of each vehicle type in the simulation:
-- Cars: 0-50 vehicles
-- Buses: 0-20 vehicles
-- Bicycles: 0-30 vehicles
-- Pedestrians: 0-50 individuals
-- Trains: 0-10 trains
-- Subway: 0-10 subway cars
+- **Cars**: 0-50 vehicles
+- **Emergency Vehicles**: 0-10 vehicles (ambulances, fire trucks, police)
 
 #### Speed Settings
 - **Simulation Speed**: 0.1x - 3.0x (controls overall simulation speed)
-- **Car Speed**: 20-120 km/h
-- **Bus Speed**: 20-80 km/h
-- **Train Speed**: 40-200 km/h
+- **Car Speed**: 20-120 km/h (configurable via code)
+- **Bus Speed**: 20-80 km/h (configurable via code)
+- **Train Speed**: 40-200 km/h (configurable via code)
+
+#### Environment Controls
+- **Time of Day**: 0-24 hours (slider control)
+- **Weather**: Select from Clear, Rain, Snow, or Fog
 
 #### Traffic Flow Options
 - **Two-Way Traffic**: Enable/disable bidirectional vehicle movement
-- **Show Subway**: Toggle underground subway visibility
-- **Show Vehicle Paths**: Display vehicle movement paths
 
 #### View Controls
 - **Reset Camera**: Return camera to default position
@@ -103,14 +156,39 @@ php -S localhost:8000
 - **Vanilla JavaScript** - No framework dependencies
 - **CSS3** - Modern styling with gradients and shadows
 
-## Project Structure
+## Project Structure (v0.2)
 
 ```
 3DTravel/
-├── index.html       # Main HTML structure
-├── styles.css       # UI styling and layout
-├── simulator.js     # Core simulation logic and 3D rendering
-└── README.md        # This file
+├── index.html              # Main HTML structure
+├── styles.css              # UI styling and layout
+├── main.js                 # Entry point (ES6 module)
+├── simulator.js            # Legacy v0.1 (kept for reference)
+├── js/
+│   ├── core/
+│   │   └── TimeManager.js          # Day/night cycle system
+│   ├── traffic/
+│   │   ├── TrafficLight.js         # Traffic light system
+│   │   └── CollisionSystem.js      # Collision detection
+│   ├── vehicles/
+│   │   ├── Vehicle.js              # Base vehicle class
+│   │   ├── Car.js                  # Car implementation
+│   │   └── EmergencyVehicle.js     # Emergency vehicles
+│   ├── analytics/
+│   │   └── StatisticsTracker.js    # Analytics & stats
+│   ├── environment/
+│   │   ├── WeatherSystem.js        # Weather effects
+│   │   └── SoundManager.js         # Audio system
+│   └── utils/
+│       ├── ConfigManager.js        # Configuration management
+│       └── SpatialPartitioning.js  # Collision grid
+├── assets/
+│   ├── sounds/      # Audio files (placeholder)
+│   └── textures/    # Texture files (placeholder)
+├── README.md        # This file
+├── CHANGELOG.md     # Version history
+├── ROADMAP_V0.2.md  # Development roadmap
+└── package.json     # Project metadata
 ```
 
 ## Architecture
