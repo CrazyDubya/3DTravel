@@ -20,6 +20,26 @@
                     <input type="range" id="car-density" min="0" max="50" value="5">
                 </div>
                 <div class="control-group">
+                    <label>Buses: <span id="bus-density-value">3</span></label>
+                    <input type="range" id="bus-density" min="0" max="20" value="3">
+                </div>
+                <div class="control-group">
+                    <label>Bicycles: <span id="bicycle-density-value">4</span></label>
+                    <input type="range" id="bicycle-density" min="0" max="30" value="4">
+                </div>
+                <div class="control-group">
+                    <label>Pedestrians: <span id="pedestrian-density-value">10</span></label>
+                    <input type="range" id="pedestrian-density" min="0" max="50" value="10">
+                </div>
+                <div class="control-group">
+                    <label>Trains: <span id="train-density-value">2</span></label>
+                    <input type="range" id="train-density" min="0" max="10" value="2">
+                </div>
+                <div class="control-group">
+                    <label>Subway: <span id="subway-density-value">2</span></label>
+                    <input type="range" id="subway-density" min="0" max="10" value="2">
+                </div>
+                <div class="control-group">
                     <label>Emergency: <span id="emergency-density-value">1</span></label>
                     <input type="range" id="emergency-density" min="0" max="10" value="1">
                 </div>
@@ -76,6 +96,7 @@
                 <h3>View Controls</h3>
                 <button id="reset-camera">Reset Camera</button>
                 <button id="toggle-pause">Pause</button>
+                <button id="toggle-heatmap">Show Heatmap</button>
                 <div class="info">
                     <p>Use mouse to rotate/zoom</p>
                     <p>Vehicles: <span id="vehicle-count">0</span></p>

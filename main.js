@@ -1,4 +1,4 @@
-// Main Entry Point for 3D Traffic Simulator v0.2
+// Main Entry Point for 3D Traffic Simulator v0.2.1
 import { ConfigManager } from './js/utils/ConfigManager.js';
 import { SpatialGrid } from './js/utils/SpatialPartitioning.js';
 import { TimeManager } from './js/core/TimeManager.js';
@@ -6,8 +6,15 @@ import { TrafficLightManager } from './js/traffic/TrafficLight.js';
 import { CollisionSystem } from './js/traffic/CollisionSystem.js';
 import { WeatherSystem } from './js/environment/WeatherSystem.js';
 import { SoundManager } from './js/environment/SoundManager.js';
+import { StreetFurniture } from './js/environment/StreetFurniture.js';
 import { StatisticsTracker } from './js/analytics/StatisticsTracker.js';
+import { HeatmapRenderer } from './js/analytics/HeatmapRenderer.js';
 import { Car } from './js/vehicles/Car.js';
+import { Bus } from './js/vehicles/Bus.js';
+import { Bicycle } from './js/vehicles/Bicycle.js';
+import { Pedestrian } from './js/vehicles/Pedestrian.js';
+import { Train } from './js/vehicles/Train.js';
+import { Subway } from './js/vehicles/Subway.js';
 import { EmergencyVehicle } from './js/vehicles/EmergencyVehicle.js';
 
 class TrafficSimulator {
@@ -28,6 +35,8 @@ class TrafficSimulator {
         this.weatherSystem = null;
         this.soundManager = null;
         this.statisticsTracker = null;
+        this.heatmapRenderer = null;
+        this.streetFurniture = null;
 
         // Infrastructure
         this.roadPaths = [];
@@ -52,6 +61,9 @@ class TrafficSimulator {
         this.weatherSystem = new WeatherSystem(this.scene, this.config);
         this.soundManager = new SoundManager(this.config);
         this.statisticsTracker = new StatisticsTracker(this.config);
+        this.heatmapRenderer = new HeatmapRenderer(this.scene, this.statisticsTracker, this.config);
+        this.streetFurniture = new StreetFurniture(this.scene, this.timeManager);
+        this.streetFurniture.createAll(this.intersections, this.roadPaths, this.sidewalkPaths);
 
         this.setupControls();
         this.updateVehicles();
@@ -107,6 +119,8 @@ class TrafficSimulator {
 
         this.createRoads();
         this.createSidewalks();
+        this.createRailTracks();
+        this.createSubwayTunnels();
         this.createBuildings();
     }
 
@@ -215,6 +229,83 @@ class TrafficSimulator {
         }
     }
 
+    createRailTracks() {
+        const railMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        const trackMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+
+        const trackAngle = Math.PI / 4;
+        const trackLength = 140;
+
+        for (let offset of [-20, 20]) {
+            // Track base
+            const trackBase = new THREE.Mesh(
+                new THREE.BoxGeometry(trackLength, 0.3, 4),
+                railMaterial
+            );
+            trackBase.rotation.y = trackAngle;
+            trackBase.position.set(offset, 0.15, offset);
+            this.scene.add(trackBase);
+
+            // Rails
+            for (let side of [-1.5, 1.5]) {
+                const rail = new THREE.Mesh(
+                    new THREE.BoxGeometry(trackLength, 0.4, 0.2),
+                    trackMaterial
+                );
+                rail.rotation.y = trackAngle;
+                const offsetX = Math.cos(trackAngle) * side;
+                const offsetZ = Math.sin(trackAngle) * side;
+                rail.position.set(offset + offsetX, 0.2, offset + offsetZ);
+                this.scene.add(rail);
+            }
+
+            // Sleepers
+            for (let i = -trackLength / 2; i < trackLength / 2; i += 3) {
+                const sleeper = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.3, 0.25, 5),
+                    railMaterial
+                );
+                sleeper.rotation.y = trackAngle;
+                const sleeperX = Math.cos(trackAngle) * i;
+                const sleeperZ = Math.sin(trackAngle) * i;
+                sleeper.position.set(offset + sleeperX, 0.12, offset + sleeperZ);
+                this.scene.add(sleeper);
+            }
+
+            this.railPaths.push({ type: 'diagonal', offset: offset, angle: trackAngle, length: trackLength });
+        }
+    }
+
+    createSubwayTunnels() {
+        const tunnelMaterial = new THREE.MeshLambertMaterial({
+            color: 0x404040,
+            transparent: true,
+            opacity: 0.3
+        });
+
+        // Subway tunnel (underground)
+        const tunnel = new THREE.Mesh(
+            new THREE.CylinderGeometry(3, 3, 120, 16, 1, true),
+            tunnelMaterial
+        );
+        tunnel.rotation.z = Math.PI / 2;
+        tunnel.position.set(0, -5, 80);
+        this.scene.add(tunnel);
+
+        // Subway tracks
+        const trackMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+        for (let side of [-1, 1]) {
+            const track = new THREE.Mesh(
+                new THREE.BoxGeometry(120, 0.2, 0.2),
+                trackMaterial
+            );
+            track.position.set(0, -6, 80 + side);
+            this.scene.add(track);
+        }
+
+        this.subwayPath = { type: 'subway', y: -5, z: 80, xStart: -60, xEnd: 60 };
+    }
+
     createBuildings() {
         const buildingPositions = [
             { x: -45, z: -45, w: 15, h: 25, d: 15 },
@@ -248,12 +339,26 @@ class TrafficSimulator {
             case 'car':
                 vehicle = new Car(this.scene, this.roadPaths, this.config);
                 break;
+            case 'bus':
+                vehicle = new Bus(this.scene, this.roadPaths, this.config);
+                break;
+            case 'bicycle':
+                vehicle = new Bicycle(this.scene, this.roadPaths, this.config);
+                break;
+            case 'pedestrian':
+                vehicle = new Pedestrian(this.scene, this.sidewalkPaths, this.config);
+                break;
+            case 'train':
+                vehicle = new Train(this.scene, this.railPaths, this.config);
+                break;
+            case 'subway':
+                vehicle = new Subway(this.scene, this.subwayPath, this.config);
+                break;
             case 'emergency':
                 const emergencyTypes = ['ambulance', 'firetruck', 'police'];
                 const emergencyType = emergencyTypes[Math.floor(Math.random() * emergencyTypes.length)];
                 vehicle = new EmergencyVehicle(this.scene, this.roadPaths, this.config, emergencyType);
                 break;
-            // Add other vehicle types here as we port them
             default:
                 vehicle = new Car(this.scene, this.roadPaths, this.config);
         }
@@ -263,10 +368,15 @@ class TrafficSimulator {
     updateVehicles() {
         const targetCounts = {
             car: this.config.get('carDensity'),
+            bus: this.config.get('busDensity'),
+            bicycle: this.config.get('bicycleDensity'),
+            pedestrian: this.config.get('pedestrianDensity'),
+            train: this.config.get('trainDensity'),
+            subway: this.config.get('subwayDensity'),
             emergency: this.config.get('emergencyDensity')
         };
 
-        const currentCounts = { car: 0, emergency: 0 };
+        const currentCounts = { car: 0, bus: 0, bicycle: 0, pedestrian: 0, train: 0, subway: 0, emergency: 0 };
 
         this.vehicles.forEach(v => {
             if (currentCounts[v.type] !== undefined) {
@@ -307,7 +417,7 @@ class TrafficSimulator {
 
     setupControls() {
         // Vehicle density controls
-        ['car', 'emergency'].forEach(type => {
+        ['car', 'bus', 'bicycle', 'pedestrian', 'train', 'subway', 'emergency'].forEach(type => {
             const slider = document.getElementById(`${type}-density`);
             if (slider) {
                 slider.addEventListener('input', (e) => {
@@ -364,6 +474,15 @@ class TrafficSimulator {
                 e.target.textContent = this.isPaused ? 'Resume' : 'Pause';
             });
         }
+
+        // Heatmap toggle
+        const heatmapToggle = document.getElementById('toggle-heatmap');
+        if (heatmapToggle) {
+            heatmapToggle.addEventListener('click', () => {
+                this.heatmapRenderer.toggle();
+                heatmapToggle.textContent = this.heatmapRenderer.enabled ? 'Hide Heatmap' : 'Show Heatmap';
+            });
+        }
     }
 
     animate() {
@@ -396,6 +515,12 @@ class TrafficSimulator {
 
             // Statistics
             this.statisticsTracker.update(this.vehicles);
+
+            // Street furniture (update lamp posts based on time)
+            this.streetFurniture.update();
+
+            // Heatmap
+            this.heatmapRenderer.update();
 
             // Update time display
             const timeDisplay = document.getElementById('current-time');

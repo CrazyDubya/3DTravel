@@ -2,6 +2,110 @@
 
 All notable changes to the 3D Traffic Simulator will be documented in this file.
 
+## [0.2.1] - 2025-11-22
+
+### Added - All Vehicle Types Restored
+- **Bus**: Large public transit vehicles
+  - Realistic bus model with body, cabin, and windows
+  - Follows road paths with proper lane management
+  - Configurable speed and density (0-20 buses)
+- **Bicycle**: Two-wheeled vehicles
+  - Detailed bicycle model with frame and wheels
+  - Rides on bike lanes (offset from roads)
+  - Fixed speed of 25 km/h
+  - Density control (0-30 bicycles)
+- **Pedestrian**: Walking individuals
+  - Humanoid models with random clothing colors
+  - Walk on sidewalks only
+  - Walking speed of 5 km/h
+  - Density control (0-50 pedestrians)
+- **Train**: Surface rail transportation
+  - Multi-car trains with locomotive and 2 carriages
+  - Follows diagonal rail tracks
+  - Realistic windows and wheels
+  - Configurable speed (40-200 km/h)
+  - Density control (0-10 trains)
+- **Subway**: Underground metro system
+  - Subway cars on underground tracks
+  - Toggle visibility (show/hide underground)
+  - Speed of 80 km/h
+  - Density control (0-10 subway cars)
+
+### Added - Infrastructure Expansion
+- **Rail Tracks**: Diagonal train tracks
+  - Realistic sleepers and rails
+  - Brown wooden ties, grey metal rails
+  - Two parallel tracks at different offsets
+- **Subway Tunnels**: Underground infrastructure
+  - Transparent tunnel visualization
+  - Underground tracks at -5m depth
+  - Located at z=80 position
+
+### Added - Street Furniture System
+- **Lamp Posts**: Automated street lighting
+  - Placed along all roads (every 20 units)
+  - Automatic activation at night (6PM-6AM)
+  - Point lights for illumination
+  - Yellow/warm light color
+- **Benches**: Sidewalk seating
+  - Wooden benches with metal legs
+  - Placed at corners and along sidewalks
+  - Proper rotation based on location
+- **Bus Stops**: Public transit infrastructure
+  - Bus stop signs with shelters
+  - Roof and support pillars
+  - Blue signage with white icon
+  - Placed at strategic locations
+- **Traffic Signs**: Road safety signage
+  - Stop signs (red octagons) at intersections
+  - Speed limit signs (white circles with red border)
+  - Proper positioning near intersections
+
+### Added - Traffic Heatmap Visualization
+- **HeatmapRenderer**: Real-time traffic visualization
+  - Density heatmap mode (vehicles per cell)
+  - Speed heatmap mode (average speed per cell)
+  - Color gradient: Blue (low) → Green → Yellow → Red (high)
+  - Grid-based visualization (10x10 unit cells)
+  - Toggle visibility via button
+  - Adjustable opacity
+  - Updates every second
+
+### UI Improvements
+- **Vehicle Density Controls**: All 7 vehicle types
+  - Cars, Buses, Bicycles, Pedestrians, Trains, Subway, Emergency
+  - Individual sliders for each type
+  - Real-time density adjustment
+- **Heatmap Toggle**: New button
+  - "Show Heatmap" / "Hide Heatmap" button
+  - Placed in View Controls section
+  - Instant toggle functionality
+
+### Technical Improvements
+- **Complete Integration**: All vehicle types work with v0.2 systems
+  - Traffic light compliance for road vehicles
+  - Collision detection for all types
+  - Statistics tracking for all types
+  - Weather effects applied uniformly
+- **Performance**: Optimized rendering
+  - Street furniture uses efficient meshes
+  - Heatmap updates throttled to 1Hz
+  - Lamp posts use point lights (shadows disabled for performance)
+
+### Files Added
+- js/vehicles/Bus.js
+- js/vehicles/Bicycle.js
+- js/vehicles/Pedestrian.js
+- js/vehicles/Train.js
+- js/vehicles/Subway.js
+- js/analytics/HeatmapRenderer.js
+- js/environment/StreetFurniture.js
+
+### Files Modified
+- main.js (integrated all new systems)
+- index.html (restored all density controls, added heatmap button)
+- CHANGELOG.md (this file)
+
 ## [0.2.0] - 2025-11-22
 
 ### Added - Traffic Intelligence System
