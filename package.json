@@ -1,0 +1,30 @@
+{
+  "name": "3d-traffic-simulator",
+  "version": "1.0.0",
+  "description": "A comprehensive 3D JavaScript traffic simulation environment featuring multiple vehicle types and infrastructure",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx http-server -p 8000"
+  },
+  "keywords": [
+    "3d",
+    "traffic",
+    "simulator",
+    "threejs",
+    "visualization",
+    "transportation",
+    "vehicles"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CrazyDubya/3DTravel.git"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}
